@@ -10,5 +10,5 @@ type batchOp struct {
 
 // add a put operation to this batch
 func (b *Batch) Put(rev int, path string, data []byte) error {
-
+	return nil
 }

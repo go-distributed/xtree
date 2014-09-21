@@ -1,5 +1,7 @@
 package db
 
+import "github.com/google/btree"
+
 // DB is the data store.
 type DB interface {
 	// Get returns the value of path, only if path exists and rev is no smaller than
@@ -30,9 +32,18 @@ type DB interface {
 }
 
 // Value is the value on specific path.
-type Value interface {
+type Value struct {
+	rev  int
+	next *Value
+	data []byte // todo: file offset
 }
 
 // Path is a collection of infomation on specific path.
-type Path interface {
+type Path struct {
+	p string
+	v Value
+}
+
+func (a Path) Less(b btree.Item) bool {
+	return a.p < b.(Path).p
 }

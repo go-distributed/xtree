@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/go-distributed/xtree/third-party/github.com/google/btree"
 )
 
 func TestPut(t *testing.T) {
@@ -28,27 +30,74 @@ func TestPut(t *testing.T) {
 	}
 }
 
-func TestList(t *testing.T) {
+func ExampleNewPath() {
+	p := newPath("/a/b/c/")
+	fmt.Println(p.level, p.p)
+
+	p = newPathForLs("/a/b/c")
+	fmt.Println(p.level, p.p)
+
+	// Output:
+	// 3 /a/b/c
+	// 4 /a/b/c/
+}
+
+func ExampleSortOrder() {
 	back := newBackend()
 	d := []byte("somedata")
-	back.Put(1, Path{p: "/a"}, d)
-	back.Put(2, Path{p: "/a/b"}, d)
-	back.Put(3, Path{p: "/a/c"}, d)
-	back.Put(4, Path{p: "/b"}, d)
+	back.Put(1, newPath("/a"), d)
+	back.Put(2, newPath("/a/b"), d)
+	back.Put(3, newPath("/a/c"), d)
+	back.Put(4, newPath("/b"), d)
+
+	back.bt.Ascend(func(i btree.Item) bool {
+		fmt.Println(i.(Path).p)
+		return true
+	})
+	// Output:
+	// /a
+	// /b
+	// /a/b
+	// /a/c
+}
+
+func ExampleLs() {
+	back := newBackend()
+	d := []byte("somedata")
+	back.Put(1, newPath("/a"), d)
+	back.Put(2, newPath("/a/b"), d)
+	back.Put(3, newPath("/b"), d)
+
+	ps := back.Ls("/")
+	for _, p := range ps {
+		fmt.Print(p.p, " ")
+	}
+
+	// Output:
+	// /a /b
+}
+
+func TestLs(t *testing.T) {
+	back := newBackend()
+	d := []byte("somedata")
+	back.Put(1, newPath("/a"), d)
+	back.Put(2, newPath("/a/b"), d)
+	back.Put(3, newPath("/a/c"), d)
+	back.Put(4, newPath("/b"), d)
 
 	tests := []struct {
 		p   string
 		wps []string
 	}{
-		{"/", []string{"/a", "/a/b", "/a/c", "/b"}},
-		{"/a", []string{"/a", "/a/b", "/a/c"}},
+		{"/", []string{"/a", "/b"}},
+		{"/a", []string{"/a/b", "/a/c"}},
 		{"/a/", []string{"/a/b", "/a/c"}},
-		{"/a/b", []string{"/a/b"}},
-		{"/b", []string{"/b"}},
+		{"/a/b", []string{}},
+		{"/b", []string{}},
 		{"/c", []string{}},
 	}
 	for i, tt := range tests {
-		ps := back.List(tt.p)
+		ps := back.Ls(tt.p)
 		if len(ps) != len(tt.wps) {
 			t.Fatalf("#%d: len(ps) = %d, want %d", i, len(ps), len(tt.wps))
 		}

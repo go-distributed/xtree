@@ -51,15 +51,18 @@ func (b *backend) Put(rev int, path Path, data []byte) {
 	panic("unimplemented")
 }
 
-func (b *backend) List(prefix string) []*Path {
-	result := make([]*Path, 0)
-	pivot := Path{p: prefix}
-	b.bt.AscendGreaterOrEqual(pivot, func(a btree.Item) bool {
-		p := a.(Path)
-		if !strings.HasPrefix(p.p, prefix) {
+// one-level listing
+func (b *backend) Ls(pathname string) []Path {
+	result := make([]Path, 0)
+	pivot := newPathForLs(pathname)
+
+	b.bt.AscendGreaterOrEqual(pivot, func(treeItem btree.Item) bool {
+		p := treeItem.(Path)
+		if !strings.HasPrefix(p.p, pivot.p) ||
+			p.level != pivot.level {
 			return false
 		}
-		result = append(result, &p)
+		result = append(result, p)
 		return true
 	})
 	return result

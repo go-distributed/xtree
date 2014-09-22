@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/btree"
 )
@@ -48,4 +49,18 @@ func (b *backend) Put(rev int, path Path, data []byte) {
 		return
 	}
 	panic("unimplemented")
+}
+
+func (b *backend) List(prefix string) []*Path {
+	result := make([]*Path, 0)
+	pivot := Path{p: prefix}
+	b.bt.AscendGreaterOrEqual(pivot, func(a btree.Item) bool {
+		p := a.(Path)
+		if !strings.HasPrefix(p.p, prefix) {
+			return false
+		}
+		result = append(result, &p)
+		return true
+	})
+	return result
 }

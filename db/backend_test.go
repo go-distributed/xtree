@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
-
-	"github.com/go-distributed/xtree/third-party/github.com/google/btree"
 )
 
 func TestPut(t *testing.T) {
@@ -28,53 +26,6 @@ func TestPut(t *testing.T) {
 			t.Errorf("#%d: data = %d, want %d", i, v.data, tt.data)
 		}
 	}
-}
-
-func ExampleNewPath() {
-	p := newPath("/a/b/c/")
-	fmt.Println(p.level, p.p)
-
-	p = newPathForLs("/a/b/c")
-	fmt.Println(p.level, p.p)
-
-	// Output:
-	// 3 /a/b/c
-	// 4 /a/b/c/
-}
-
-func ExampleSortOrder() {
-	back := newBackend()
-	d := []byte("somedata")
-	back.Put(1, newPath("/a"), d)
-	back.Put(2, newPath("/a/b"), d)
-	back.Put(3, newPath("/a/c"), d)
-	back.Put(4, newPath("/b"), d)
-
-	back.bt.Ascend(func(i btree.Item) bool {
-		fmt.Println(i.(Path).p)
-		return true
-	})
-	// Output:
-	// /a
-	// /b
-	// /a/b
-	// /a/c
-}
-
-func ExampleLs() {
-	back := newBackend()
-	d := []byte("somedata")
-	back.Put(1, newPath("/a"), d)
-	back.Put(2, newPath("/a/b"), d)
-	back.Put(3, newPath("/b"), d)
-
-	ps := back.Ls("/")
-	for _, p := range ps {
-		fmt.Print(p.p, " ")
-	}
-
-	// Output:
-	// /a /b
 }
 
 func TestLs(t *testing.T) {

@@ -15,19 +15,14 @@ type Path struct {
 
 func newPath(pathname string) Path {
 	pathname = strings.TrimRight(pathname, "/")
-	res := Path{
-		p: pathname,
-	}
+	res := Path{p: pathname}
 
-	names := strings.Split(
-		strings.TrimLeft(pathname, "/"),
-		"/")
-
-	res.level = len(names)
-	for _, name := range names {
-		if name == "" {
-			res.level--
-		}
+	if pathname == "" {
+		res.level = 0
+	} else {
+		res.level = len(strings.Split(
+			strings.TrimLeft(pathname, "/"),
+			"/"))
 	}
 
 	return res

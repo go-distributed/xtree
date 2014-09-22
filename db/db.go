@@ -16,20 +16,19 @@ type DB interface {
 	// Head returns the global rev of this DB.
 	// If it failed, an error is returned.
 	Head() (int, error)
-	// List returns a possibly-empty list of Paths with prefix at or after rev.
-	// The list is sorted in the ordering of:
+	// List returns a possibly-empty list of Paths under speicifc path at or after rev.
+	// The list is sorted by the ordering of:
 	// 1. level (separated by '/')
 	// 2. name in each level.
 	//
-	// If level is >= 0, it takes up to level from current path. '/a' is
-	// 0 level from '/a', while '/a/b' is 1.
-	// If level is -1, it means any.
+	// If recursive is false, it lists just one level under the path.
+	// Otherwise, it lists recursively all paths.
 	//
-	// if count is >= 0, it is how many paths we want in the list.
+	// if count is >= 0, it is the number of paths we want in the list.
 	// if count is -1, it means any.
 	//
 	// if it failed, an error is returned.
-	List(rev int, prefix string, level int, count int) ([]Path, error)
+	List(rev int, path string, recursive bool, count int) ([]Path, error)
 	// Transaction executes a batch of operations atomically.
 	// If it succeeds, a list of values corresponding to each operation is
 	// returned. Otherwise, an error indicating the first failure is returned.

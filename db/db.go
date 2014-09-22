@@ -1,6 +1,6 @@
 package db
 
-import "github.com/google/btree"
+import "github.com/go-distributed/xtree/third-party/github.com/google/btree"
 
 // DB is the data store.
 type DB interface {

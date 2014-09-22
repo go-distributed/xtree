@@ -1,0 +1,13 @@
+{
+	"ImportPath": "github.com/go-distributed/xtree",
+	"GoVersion": "go1.3",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/google/btree",
+			"Rev": "118f8ac19d6c200aedb80fb824c31f503e68d40d"
+		}
+	]
+}

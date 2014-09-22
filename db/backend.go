@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-distributed/xtree/third-party/github.com/google/btree"
+	"github.com/google/btree"
 )
 
 type backend struct {

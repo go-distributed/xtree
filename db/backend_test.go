@@ -28,27 +28,27 @@ func TestPut(t *testing.T) {
 	}
 }
 
-func TestList(t *testing.T) {
+func TestLs(t *testing.T) {
 	back := newBackend()
 	d := []byte("somedata")
-	back.Put(1, Path{p: "/a"}, d)
-	back.Put(2, Path{p: "/a/b"}, d)
-	back.Put(3, Path{p: "/a/c"}, d)
-	back.Put(4, Path{p: "/b"}, d)
+	back.Put(1, newPath("/a"), d)
+	back.Put(2, newPath("/a/b"), d)
+	back.Put(3, newPath("/a/c"), d)
+	back.Put(4, newPath("/b"), d)
 
 	tests := []struct {
 		p   string
 		wps []string
 	}{
-		{"/", []string{"/a", "/a/b", "/a/c", "/b"}},
-		{"/a", []string{"/a", "/a/b", "/a/c"}},
+		{"/", []string{"/a", "/b"}},
+		{"/a", []string{"/a/b", "/a/c"}},
 		{"/a/", []string{"/a/b", "/a/c"}},
-		{"/a/b", []string{"/a/b"}},
-		{"/b", []string{"/b"}},
+		{"/a/b", []string{}},
+		{"/b", []string{}},
 		{"/c", []string{}},
 	}
 	for i, tt := range tests {
-		ps := back.List(tt.p)
+		ps := back.Ls(tt.p)
 		if len(ps) != len(tt.wps) {
 			t.Fatalf("#%d: len(ps) = %d, want %d", i, len(ps), len(tt.wps))
 		}

@@ -13,9 +13,9 @@ type Path struct {
 	level int
 }
 
-func newPath(pathname string) Path {
+func newPath(pathname string) *Path {
 	pathname = strings.TrimRight(pathname, "/")
-	res := Path{p: pathname}
+	res := &Path{p: pathname}
 
 	if pathname == "" {
 		res.level = 0
@@ -28,15 +28,15 @@ func newPath(pathname string) Path {
 	return res
 }
 
-func newPathForLs(pathname string) Path {
+func newPathForLs(pathname string) *Path {
 	res := newPath(pathname)
 	res.level += 1
 	res.p += "/"
 	return res
 }
 
-func (a Path) Less(treeItem btree.Item) bool {
-	b := treeItem.(Path)
+func (a *Path) Less(treeItem btree.Item) bool {
+	b := treeItem.(*Path)
 
 	if a.level != b.level {
 		return a.level < b.level

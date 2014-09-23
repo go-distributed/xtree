@@ -24,7 +24,7 @@ func TestPut(t *testing.T) {
 			t.Errorf("#%d: rev = %d, want %d", i, v.rev, tt.rev)
 		}
 		if !reflect.DeepEqual(v.data, tt.data) {
-			t.Errorf("#%d: data = %d, want %d", i, v.data, tt.data)
+			t.Errorf("#%d: data = %s, want %s", i, v.data, tt.data)
 		}
 	}
 }
@@ -44,15 +44,21 @@ func TestPutOnExistingPath(t *testing.T) {
 		b.Put(2*i+1, tt.path, tt.data1)
 		v := b.Get(2*i+1, tt.path)
 
-		if v.rev != 2*i+1 || !reflect.DeepEqual(tt.data1, v.data) {
-			t.Errorf("Put(%d, %s) => (%d, %s)", 2*i+1, tt.data1, v.rev, v.data)
+		if v.rev != 2*i+1 {
+			t.Errorf("#%d 1: rev = %d, want %d", i, v.rev, 2*i+1)
+		}
+		if !reflect.DeepEqual(v.data, tt.data1) {
+			t.Errorf("#%d 1: data = %s, want %s", i, v.data, tt.data1)
 		}
 
 		b.Put(2*i+2, tt.path, tt.data2)
 		v = b.Get(2*i+2, tt.path)
 
-		if v.rev != 2*i+2 || !reflect.DeepEqual(tt.data2, v.data) {
-			t.Errorf("Put(%d, %s) => (%d, %s)", 2*i+2, tt.data2, v.rev, v.data)
+		if v.rev != 2*i+2 {
+			t.Errorf("#%d 2: rev = %d, want %d", i, v.rev, 2*i+2)
+		}
+		if !reflect.DeepEqual(v.data, tt.data2) {
+			t.Errorf("#%d 2: data = %s, want %s", i, v.data, tt.data2)
 		}
 	}
 }

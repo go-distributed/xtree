@@ -12,18 +12,53 @@ func TestPut(t *testing.T) {
 		path Path
 		data []byte
 	}{
-		{1, Path{p: "/foo/bar"}, []byte("somedata")},
+		{1, *newPath("/foo/bar"), []byte("somedata")},
+		{2, *newPath("/bar/foo"), []byte("datasome")},
 	}
 
+	b := newBackend()
 	for i, tt := range tests {
-		b := newBackend()
 		b.Put(tt.rev, tt.path, tt.data)
 		v := b.Get(tt.rev, tt.path)
 		if v.rev != tt.rev {
 			t.Errorf("#%d: rev = %d, want %d", i, v.rev, tt.rev)
 		}
 		if !reflect.DeepEqual(v.data, tt.data) {
-			t.Errorf("#%d: data = %d, want %d", i, v.data, tt.data)
+			t.Errorf("#%d: data = %s, want %s", i, v.data, tt.data)
+		}
+	}
+}
+
+func TestPutOnExistingPath(t *testing.T) {
+	tests := []struct {
+		path  Path
+		data1 []byte
+		data2 []byte
+	}{
+		{*newPath("/foo/bar"), []byte("first"), []byte("second")},
+		{*newPath("/bar/foo"), []byte("first"), []byte("second")},
+	}
+
+	b := newBackend()
+	for i, tt := range tests {
+		b.Put(2*i+1, tt.path, tt.data1)
+		v := b.Get(2*i+1, tt.path)
+
+		if v.rev != 2*i+1 {
+			t.Errorf("#%d 1: rev = %d, want %d", i, v.rev, 2*i+1)
+		}
+		if !reflect.DeepEqual(v.data, tt.data1) {
+			t.Errorf("#%d 1: data = %s, want %s", i, v.data, tt.data1)
+		}
+
+		b.Put(2*i+2, tt.path, tt.data2)
+		v = b.Get(2*i+2, tt.path)
+
+		if v.rev != 2*i+2 {
+			t.Errorf("#%d 2: rev = %d, want %d", i, v.rev, 2*i+2)
+		}
+		if !reflect.DeepEqual(v.data, tt.data2) {
+			t.Errorf("#%d 2: data = %s, want %s", i, v.data, tt.data2)
 		}
 	}
 }
@@ -31,10 +66,10 @@ func TestPut(t *testing.T) {
 func TestLs(t *testing.T) {
 	back := newBackend()
 	d := []byte("somedata")
-	back.Put(1, newPath("/a"), d)
-	back.Put(2, newPath("/a/b"), d)
-	back.Put(3, newPath("/a/c"), d)
-	back.Put(4, newPath("/b"), d)
+	back.Put(1, *newPath("/a"), d)
+	back.Put(2, *newPath("/a/b"), d)
+	back.Put(3, *newPath("/a/c"), d)
+	back.Put(4, *newPath("/b"), d)
 
 	tests := []struct {
 		p   string

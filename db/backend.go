@@ -27,28 +27,34 @@ func (b *backend) Get(rev int, path Path) Value {
 			return v
 		}
 	}
-	item := b.bt.Get(path)
-	p := item.(Path)
+	item := b.bt.Get(&path)
+	if item == nil {
+		panic("unimplemented")
+	}
+
+	p := item.(*Path)
 	if p.v.rev == rev {
-		return p.v
+		return *p.v
 	}
 	fmt.Println(p.v.rev, rev)
 	panic("unimplemented")
 }
 
 func (b *backend) Put(rev int, path Path, data []byte) {
-	nv := Value{
+	nv := &Value{
 		rev:  b.rev + 1,
 		data: data,
 	}
-	item := b.bt.Get(path)
+	item := b.bt.Get(&path)
 	if item == nil {
 		path.v = nv
-		b.bt.ReplaceOrInsert(path)
-		b.rev++
-		return
+		b.bt.ReplaceOrInsert(&path)
+	} else {
+		exPath := item.(*Path)
+		nv.next = exPath.v
+		exPath.v = nv
 	}
-	panic("unimplemented")
+	b.rev++
 }
 
 // one-level listing
@@ -57,12 +63,12 @@ func (b *backend) Ls(pathname string) []Path {
 	pivot := newPathForLs(pathname)
 
 	b.bt.AscendGreaterOrEqual(pivot, func(treeItem btree.Item) bool {
-		p := treeItem.(Path)
+		p := treeItem.(*Path)
 		if !strings.HasPrefix(p.p, pivot.p) ||
 			p.level != pivot.level {
 			return false
 		}
-		result = append(result, p)
+		result = append(result, *p)
 		return true
 	})
 	return result

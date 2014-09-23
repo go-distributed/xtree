@@ -9,10 +9,10 @@ import (
 func TestPut(t *testing.T) {
 	tests := []struct {
 		rev  int
-		path Path
+		path string
 		data []byte
 	}{
-		{1, Path{p: "/foo/bar"}, []byte("somedata")},
+		{1, "/foo/bar", []byte("somedata")},
 	}
 
 	for i, tt := range tests {
@@ -23,7 +23,33 @@ func TestPut(t *testing.T) {
 			t.Errorf("#%d: rev = %d, want %d", i, v.rev, tt.rev)
 		}
 		if !reflect.DeepEqual(v.data, tt.data) {
-			t.Errorf("#%d: data = %d, want %d", i, v.data, tt.data)
+			t.Errorf("#%d: data = %s, want %s", i, v.data, tt.data)
+		}
+	}
+}
+
+func TestPutOverwrite(t *testing.T) {
+	tests := []struct {
+		path       string
+		firstData  []byte
+		secondData []byte
+	}{
+		{"/a", []byte("first"), []byte("second")},
+	}
+
+	for _, tt := range tests {
+		b := newBackend()
+
+		b.Put(1, tt.path, tt.firstData)
+		v := b.Get(1, tt.path)
+		if v.rev != 1 || !reflect.DeepEqual(v.data, tt.firstData) {
+			t.Errorf("Put(1, %s) => (%d, %s)", tt.firstData, v.rev, v.data)
+		}
+
+		b.Put(2, tt.path, tt.secondData)
+		v = b.Get(2, tt.path)
+		if v.rev != 2 || !reflect.DeepEqual(v.data, tt.secondData) {
+			t.Errorf("Put(2, %s) => (%d, %s)", tt.secondData, v.rev, v.data)
 		}
 	}
 }
@@ -31,10 +57,10 @@ func TestPut(t *testing.T) {
 func TestLs(t *testing.T) {
 	back := newBackend()
 	d := []byte("somedata")
-	back.Put(1, newPath("/a"), d)
-	back.Put(2, newPath("/a/b"), d)
-	back.Put(3, newPath("/a/c"), d)
-	back.Put(4, newPath("/b"), d)
+	back.Put(1, "/a", d)
+	back.Put(2, "/a/b", d)
+	back.Put(3, "/a/c", d)
+	back.Put(4, "/b", d)
 
 	tests := []struct {
 		p   string
@@ -64,9 +90,9 @@ func BenchmarkPut(b *testing.B) {
 	b.StopTimer()
 	back := newBackend()
 	d := []byte("somedata")
-	path := make([]Path, b.N)
+	path := make([]string, b.N)
 	for i := range path {
-		path[i] = Path{p: fmt.Sprintf("/%d", i+1)}
+		path[i] = fmt.Sprintf("/%d", i+1)
 	}
 
 	b.StartTimer()
@@ -79,9 +105,9 @@ func BenchmarkGetWithCache(b *testing.B) {
 	b.StopTimer()
 	back := newBackend()
 	d := []byte("somedata")
-	path := make([]Path, b.N)
+	path := make([]string, b.N)
 	for i := range path {
-		path[i] = Path{p: fmt.Sprintf("/%d", i+1)}
+		path[i] = fmt.Sprintf("/%d", i+1)
 	}
 	for i := 1; i < b.N; i++ {
 		back.Put(i, path[i], d)
@@ -100,9 +126,9 @@ func BenchmarkGetWithOutCache(b *testing.B) {
 	back := newBackend()
 	back.cache = nil
 	d := []byte("somedata")
-	path := make([]Path, b.N)
+	path := make([]string, b.N)
 	for i := range path {
-		path[i] = Path{p: fmt.Sprintf("/%d", i+1)}
+		path[i] = fmt.Sprintf("/%d", i+1)
 	}
 	for i := 1; i < b.N; i++ {
 		back.Put(i, path[i], d)

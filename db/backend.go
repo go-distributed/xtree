@@ -21,14 +21,19 @@ func newBackend() *backend {
 	}
 }
 
-func (b *backend) Get(rev int, path Path) Value {
+func (b *backend) Get(rev int, pathname string) Value {
 	if b.cache != nil {
-		if v, ok := b.cache.get(revpath{rev: rev, path: path.p}); ok {
+		if v, ok := b.cache.get(revpath{rev: rev, path: pathname}); ok {
 			return v
 		}
 	}
-	item := b.bt.Get(path)
-	p := item.(Path)
+
+	item := b.bt.Get(newPath(pathname))
+	if item == nil {
+		panic("unimplemented")
+	}
+
+	p := item.(*Path)
 	if p.v.rev == rev {
 		return p.v
 	}
@@ -36,19 +41,22 @@ func (b *backend) Get(rev int, path Path) Value {
 	panic("unimplemented")
 }
 
-func (b *backend) Put(rev int, path Path, data []byte) {
+func (b *backend) Put(rev int, pathname string, data []byte) {
 	nv := Value{
 		rev:  b.rev + 1,
 		data: data,
 	}
-	item := b.bt.Get(path)
+	toGet := newPath(pathname)
+	item := b.bt.Get(toGet)
 	if item == nil {
-		path.v = nv
-		b.bt.ReplaceOrInsert(path)
-		b.rev++
-		return
+		toGet.v = nv
+		b.bt.ReplaceOrInsert(toGet)
+	} else {
+		exGet := item.(*Path)
+		exGet.v = nv
 	}
-	panic("unimplemented")
+
+	b.rev++
 }
 
 // one-level listing
@@ -57,12 +65,12 @@ func (b *backend) Ls(pathname string) []Path {
 	pivot := newPathForLs(pathname)
 
 	b.bt.AscendGreaterOrEqual(pivot, func(treeItem btree.Item) bool {
-		p := treeItem.(Path)
+		p := treeItem.(*Path)
 		if !strings.HasPrefix(p.p, pivot.p) ||
 			p.level != pivot.level {
 			return false
 		}
-		result = append(result, p)
+		result = append(result, *p)
 		return true
 	})
 	return result

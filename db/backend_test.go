@@ -63,6 +63,41 @@ func TestPutOnExistingPath(t *testing.T) {
 	}
 }
 
+func TestGetMVCC(t *testing.T) {
+	b := newBackend()
+	b.Put(1, *newPath("/a"), []byte("1"))
+	b.Put(2, *newPath("/b"), []byte("2"))
+	b.Put(3, *newPath("/a"), []byte("3"))
+	b.Put(4, *newPath("/b"), []byte("4"))
+
+	tests := []struct {
+		getRev  int
+		wantRev int
+		path    Path
+		data    []byte
+	}{
+		{1, 1, *newPath("/a"), []byte("1")},
+		{2, 1, *newPath("/a"), []byte("1")},
+		{3, 3, *newPath("/a"), []byte("3")},
+		{1, 0, *newPath("/b"), nil},
+		{2, 2, *newPath("/b"), []byte("2")},
+		{3, 2, *newPath("/b"), []byte("2")},
+		{4, 4, *newPath("/b"), []byte("4")},
+	}
+
+	for i, tt := range tests {
+		v := b.Get(tt.getRev, tt.path)
+
+		if v.rev != tt.wantRev {
+			t.Errorf("#%d: rev = %d, want %d", i, v.rev, tt.wantRev)
+		}
+
+		if !reflect.DeepEqual(v.data, tt.data) {
+			t.Errorf("#%d: data = %s, want %s", i, v.data, tt.data)
+		}
+	}
+}
+
 func TestLs(t *testing.T) {
 	back := newBackend()
 	d := []byte("somedata")

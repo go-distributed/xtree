@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/go-distributed/xtree/third-party/github.com/google/btree"
@@ -21,6 +20,7 @@ func newBackend() *backend {
 	}
 }
 
+// if it couldn't find anything related to path, it return Value of 0 rev.
 func (b *backend) Get(rev int, path Path) Value {
 	if b.cache != nil {
 		if v, ok := b.cache.get(revpath{rev: rev, path: path.p}); ok {
@@ -29,15 +29,20 @@ func (b *backend) Get(rev int, path Path) Value {
 	}
 	item := b.bt.Get(&path)
 	if item == nil {
-		panic("unimplemented")
+		return Value{}
 	}
 
-	p := item.(*Path)
-	if p.v.rev == rev {
-		return *p.v
+	v := item.(*Path).v
+
+	for v != nil && v.rev > rev {
+		v = v.next
 	}
-	fmt.Println(p.v.rev, rev)
-	panic("unimplemented")
+
+	if v == nil {
+		return Value{}
+	}
+
+	return *v
 }
 
 func (b *backend) Put(rev int, path Path, data []byte) {

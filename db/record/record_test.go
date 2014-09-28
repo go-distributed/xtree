@@ -9,6 +9,8 @@ import (
 	"testing"
 )
 
+const randOffset = 9
+
 func TestSimpleRead(t *testing.T) {
 
 	testEq := func(a, b []byte) bool {
@@ -29,19 +31,19 @@ func TestSimpleRead(t *testing.T) {
 	var readValue []byte
 	realValue := []byte("Hello, World")
 	realLen := len(realValue)
-	realLenSlice := make([]byte, 4, 4)
-	crcSlice := make([]byte, 4, 4)
+	crcSlice := make([]byte, sizeOfCRC, sizeOfCRC)
+	realLenSlice := make([]byte, sizeOfLength, sizeOfLength)
 	binary.LittleEndian.PutUint32(realLenSlice, uint32(realLen))
 	crc := crc32.Update(crc32.Checksum(realLenSlice, crcTable), crcTable, realValue)
 	binary.LittleEndian.PutUint32(crcSlice, crc)
 
-	buf.Write(make([]byte, 9, 9))
+	buf.Write(make([]byte, randOffset, randOffset))
 	buf.Write(crcSlice)
 	buf.Write(realLenSlice)
 	buf.Write(realValue)
 
 	r := NewReader(bytes.NewReader(buf.Bytes()))
-	valReader, err = r.ReadAt(9)
+	valReader, err = r.ReadAt(randOffset)
 	if err != nil {
 		t.Fatalf("error on new reader: %s", err.Error())
 	}

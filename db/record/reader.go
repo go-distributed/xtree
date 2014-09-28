@@ -8,8 +8,6 @@ import (
 	"io"
 )
 
-const ()
-
 type Reader struct {
 	ra io.ReaderAt
 }
@@ -19,14 +17,13 @@ func NewReader(r io.ReaderAt) *Reader {
 }
 
 func (r *Reader) ReadAt(index int64) (io.Reader, error) {
-	//TODO change 4 to const
-	crcSlice := make([]byte, 4, 4)
-	valLenSlice := make([]byte, 4, 4)
+	crcSlice := make([]byte, sizeOfCRC, sizeOfCRC)
+	valLenSlice := make([]byte, sizeOfLength, sizeOfLength)
 	if _, err := r.ra.ReadAt(crcSlice, index); err != nil {
 		return nil, err
 	}
 
-	if _, err := r.ra.ReadAt(valLenSlice, index+4); err != nil {
+	if _, err := r.ra.ReadAt(valLenSlice, index+int64(sizeOfCRC)); err != nil {
 		return nil, err
 	}
 
@@ -34,7 +31,7 @@ func (r *Reader) ReadAt(index int64) (io.Reader, error) {
 	valLen := binary.LittleEndian.Uint32(valLenSlice)
 
 	value := make([]byte, valLen, valLen)
-	if _, err := r.ra.ReadAt(value, index+4+4); err != nil {
+	if _, err := r.ra.ReadAt(value, index+int64(sizeOfCRC+sizeOfLength)); err != nil {
 		return nil, err
 	}
 

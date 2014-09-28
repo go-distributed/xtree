@@ -6,9 +6,9 @@ type Reader struct {
 }
 
 func NewReader(r io.ReaderAt) *Reader {
-
+	return nil
 }
 
-func (r *Reader) ReadAt(index int64) (*io.Reader, error) {
-
+func (r *Reader) ReadAt(offset int64) (io.Reader, error) {
+	return nil, nil
 }

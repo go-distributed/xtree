@@ -10,10 +10,6 @@ import (
 
 const ()
 
-var (
-	crcTable = crc32.MakeTable(crc32.Koopman)
-)
-
 type Reader struct {
 	ra io.ReaderAt
 }

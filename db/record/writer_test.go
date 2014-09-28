@@ -18,17 +18,14 @@ func TestWriter(t *testing.T) {
 	if m.Len() != 0 {
 		t.Fatalf("Initial file length is not zero")
 	}
-	w, err := NewWriter(m)
-	if err != nil {
-		t.Fatalf("Cannot create writer")
-	}
+	w := NewWriter(m)
 	offset, value, _ := w.Append()
 	if offset != 0 {
 		t.Fatalf("Initial offset is not 0")
 	}
 	s := "test string"
 	value.Write([]byte(s))
-	offset, value, err = w.Append()
+	offset, value, err := w.Append()
 	if err != nil {
 		t.Fatalf(err.Error())
 	}

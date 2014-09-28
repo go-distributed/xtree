@@ -71,13 +71,13 @@ type Writer struct {
 	w io.WriteSeeker
 }
 
-func NewWriter(w io.WriteSeeker) (*Writer, error) {
+func NewWriter(w io.WriteSeeker) *Writer {
 	// Seek to the end
 	offset, err := w.Seek(0, 2)
 	if err != nil {
-		return nil, err
+		panic("")
 	}
-	return &Writer{offset, nil, w}, nil
+	return &Writer{offset, nil, w}
 }
 
 // Not thread-safe

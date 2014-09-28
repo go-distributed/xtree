@@ -35,8 +35,12 @@ type DB interface {
 
 // Value is the value on specific path.
 type Value struct {
-	rev     int
-	next    *Value
-	data    []byte // todo: file offset
-	offsets []int64
+	rev  int
+	data []byte // todo: file offset
+}
+
+type memValue struct {
+	rev    int
+	next   *memValue
+	offset int64
 }

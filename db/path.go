@@ -9,7 +9,7 @@ import (
 // Path is a collection of infomation on specific path.
 type Path struct {
 	p     string
-	v     *Value
+	v     *memValue
 	level int
 }
 

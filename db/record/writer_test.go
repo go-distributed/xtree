@@ -2,8 +2,15 @@ package record
 
 import "testing"
 import "bytes"
+import "unsafe"
+import "encoding/binary"
 
 //import "fmt"
+
+const (
+	sizeOfLength = int(unsafe.Sizeof(uint32(0)))
+	sizeOfCRC    = int(unsafe.Sizeof(uint32(0)))
+)
 
 type memFile struct {
 	bytes.Buffer
@@ -40,10 +47,13 @@ func TestWriter(t *testing.T) {
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
-	if m.Len() != 8+len(s) {
-		t.Fatalf("File length not correct")
+	if m.Len() != sizeOfLength+sizeOfCRC+len(s) {
+		t.Fatalf("File length is incorrect")
 	}
-	if len(m.Bytes()[4:]) != 4+len(s) {
-		t.Fatalf("%d != %d", len(m.Bytes()[4:]), 4+len(s))
+	if len(m.Bytes()[sizeOfCRC:]) != sizeOfCRC+len(s) {
+		t.Fatalf("Bytes length is incorrect: expect: %d, got: %d", len(m.Bytes()[sizeOfCRC:]), sizeOfCRC+len(s))
+	}
+	if int(binary.LittleEndian.Uint32(m.Bytes()[sizeOfCRC:sizeOfCRC+sizeOfLength+1])) != len(s) {
+		t.Fatalf("Data length is incorrect")
 	}
 }

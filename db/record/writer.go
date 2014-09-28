@@ -1,8 +1,7 @@
 package record
 
 import "io"
-
-// import "fmt"
+import "unsafe"
 import "errors"
 import "hash/crc32"
 import "encoding/binary"
@@ -14,6 +13,11 @@ type flusher interface {
 }
 
 const bufferSize = 32 * 1024
+
+const (
+	sizeOfLength = int(unsafe.Sizeof(uint32(0)))
+	sizeOfCRC    = int(unsafe.Sizeof(uint32(0)))
+)
 
 type recordWriter struct {
 	w      *Writer
@@ -34,11 +38,11 @@ func (r *recordWriter) finalize() error {
 		return nil
 	}
 	l := len(r.buf)
-	lBuf := make([]byte, 4)
+	lBuf := make([]byte, sizeOfLength)
 	binary.LittleEndian.PutUint32(lBuf, uint32(l))
 	crc := crc32.Checksum(lBuf, crcTable)
 	crc = crc32.Update(crc, crcTable, r.buf)
-	crcBuf := make([]byte, 4)
+	crcBuf := make([]byte, sizeOfCRC)
 	binary.LittleEndian.PutUint32(crcBuf, crc)
 	// Write CRC
 	if _, err := r.w.w.Write(crcBuf); err != nil {

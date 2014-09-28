@@ -2,15 +2,7 @@ package record
 
 import "testing"
 import "bytes"
-import "unsafe"
 import "encoding/binary"
-
-//import "fmt"
-
-const (
-	sizeOfLength = int(unsafe.Sizeof(uint32(0)))
-	sizeOfCRC    = int(unsafe.Sizeof(uint32(0)))
-)
 
 type memFile struct {
 	bytes.Buffer

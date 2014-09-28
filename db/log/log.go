@@ -1,8 +1,7 @@
-package db
+package log
 
 import (
 	"os"
-	"strings"
 )
 
 type log struct {

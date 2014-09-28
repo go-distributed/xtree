@@ -3,13 +3,16 @@ package db
 import (
 	"strings"
 
+	"github.com/go-distributed/xtree/db/record"
 	"github.com/go-distributed/xtree/third-party/github.com/google/btree"
 )
 
 type backend struct {
-	bt    *btree.BTree
-	cache *cache
-	rev   int
+	bt     *btree.BTree
+	cache  *cache
+	rev    int
+	reader *record.Reader
+	writer *record.Writer
 }
 
 func newBackend() *backend {

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -92,6 +93,11 @@ func (b *backend) Put(rev int, path Path, data []byte) {
 
 	// offset, data
 	offset, w, err := b.writer.Append()
+	if err != nil {
+		panic("unimplemented")
+	}
+
+	err = NewRecordEncoder(w).Encode(bytes.Buffer(data))
 	if err != nil {
 		panic("unimplemented")
 	}

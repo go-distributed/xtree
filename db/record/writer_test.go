@@ -24,7 +24,7 @@ func TestWriter(t *testing.T) {
 		t.Fatalf("Initial offset is not 0")
 	}
 	s := "test string"
-	value.Write([]byte(s))
+	NewRecordEncoder(value).Encode(&Record{[]byte(s)})
 	offset, value, err := w.Append()
 	if err != nil {
 		t.Fatalf(err.Error())

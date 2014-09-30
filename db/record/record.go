@@ -19,12 +19,12 @@ type Record struct {
 	Data []byte
 }
 
-type encoder interface {
-	Encode(r *Record) error
+type Encoder interface {
+	Encode(w io.Writer, r *Record) error
 }
 
-type decoder interface {
-	Decode(r *Record) error
+type Decoder interface {
+	Decode(reader io.Reader, r *Record) error
 }
 
 type RecordEncoder struct {

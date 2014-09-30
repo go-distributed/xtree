@@ -27,21 +27,9 @@ type Decoder interface {
 	Decode(reader io.Reader, r *Record) error
 }
 
-type RecordEncoder struct {
-	w io.Writer
-}
+type LittleEndianEncoder struct{}
 
-func NewRecordEncoder(w io.Writer) *RecordEncoder {
-	return &RecordEncoder{w}
-}
-
-type RecordDecoder struct {
-	r io.Reader
-}
-
-func NewRecordDecoder(r io.Reader) *RecordDecoder {
-	return &RecordDecoder{r}
-}
+type LittleEndianDecoder struct{}
 
 func encodeLength(r *Record) []byte {
 	lBuf := make([]byte, sizeOfLength)
@@ -61,38 +49,38 @@ func encodeCRC(r *Record) []byte {
 	return crcBuf
 }
 
-func (encoder *RecordEncoder) Encode(r *Record) error {
+func (*LittleEndianEncoder) Encode(w io.Writer, r *Record) error {
 	// Write CRC
-	if _, err := encoder.w.Write(encodeCRC(r)); err != nil {
+	if _, err := w.Write(encodeCRC(r)); err != nil {
 		return err
 	}
 	// Write length
-	if _, err := encoder.w.Write(encodeLength(r)); err != nil {
+	if _, err := w.Write(encodeLength(r)); err != nil {
 		return err
 	}
 	// Write data
-	if _, err := encoder.w.Write(r.data); err != nil {
+	if _, err := w.Write(r.data); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (decoder *RecordDecoder) Decode(r *Record) error {
+func (*LittleEndianDecoder) Decode(rd io.Reader, r *Record) error {
 	var crc, length uint32
 
 	// Read CRC
-	err := binary.Read(decoder.r, binary.LittleEndian, &crc)
+	err := binary.Read(rd, binary.LittleEndian, &crc)
 	if err != nil {
 		return err
 	}
 	// Read length
-	err = binary.Read(decoder.r, binary.LittleEndian, &length)
+	err = binary.Read(rd, binary.LittleEndian, &length)
 	if err != nil {
 		return err
 	}
 	// Read data
 	r.data = make([]byte, length)
-	_, err = io.ReadFull(decoder.r, r.data)
+	_, err = io.ReadFull(rd, r.data)
 	if err != nil {
 		return err
 	}

@@ -16,7 +16,7 @@ const (
 var crcTable = crc32.MakeTable(crc32.Koopman)
 
 type Record struct {
-	Data []byte
+	data []byte
 }
 
 type Encoder interface {
@@ -45,13 +45,13 @@ func NewRecordDecoder(r io.Reader) *RecordDecoder {
 
 func encodeLength(r *Record) []byte {
 	lBuf := make([]byte, sizeOfLength)
-	binary.LittleEndian.PutUint32(lBuf, uint32(len(r.Data)))
+	binary.LittleEndian.PutUint32(lBuf, uint32(len(r.data)))
 	return lBuf
 }
 
 func calculateCRC(r *Record) uint32 {
 	crc := crc32.Checksum(encodeLength(r), crcTable)
-	crc = crc32.Update(crc, crcTable, r.Data)
+	crc = crc32.Update(crc, crcTable, r.data)
 	return crc
 }
 
@@ -71,7 +71,7 @@ func (encoder *RecordEncoder) Encode(r *Record) error {
 		return err
 	}
 	// Write data
-	if _, err := encoder.w.Write(r.Data); err != nil {
+	if _, err := encoder.w.Write(r.data); err != nil {
 		return err
 	}
 	return nil
@@ -91,8 +91,8 @@ func (decoder *RecordDecoder) Decode(r *Record) error {
 		return err
 	}
 	// Read data
-	r.Data = make([]byte, length)
-	_, err = io.ReadFull(decoder.r, r.Data)
+	r.data = make([]byte, length)
+	_, err = io.ReadFull(decoder.r, r.data)
 	if err != nil {
 		return err
 	}

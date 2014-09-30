@@ -1,15 +1,17 @@
 package record
 
 import (
+	"bytes"
 	"io"
 )
 
 type Reader struct {
-	rs io.ReadSeeker
+	rs  io.ReadSeeker
+	dec Decoder
 }
 
-func NewReader(rs io.ReadSeeker) *Reader {
-	return &Reader{rs: rs}
+func NewReader(rs io.ReadSeeker, dec Decoder) *Reader {
+	return &Reader{rs, dec}
 }
 
 func (rd *Reader) ReadAt(index int64) (io.Reader, error) {
@@ -17,5 +19,12 @@ func (rd *Reader) ReadAt(index int64) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	return rd.rs, nil
+
+	rec := Record{}
+	err = rd.dec.Decode(rd.rs, &rec)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.NewBuffer(rec.data), nil
 }

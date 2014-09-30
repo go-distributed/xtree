@@ -1,8 +1,6 @@
 package db
 
 import (
-	"bytes"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -41,17 +39,18 @@ func (b *backend) Close() {
 }
 
 func (b *backend) getData(offset int64) []byte {
-	r, err := b.reader.ReadAt(offset)
+	reader, err := b.reader.ReadAt(offset)
+	if err != nil {
+		panic("unimplemented")
+	}
+	decoder := record.NewRecordDecoder(reader)
+	var record record.Record
+	err = decoder.Decode(&record)
 	if err != nil {
 		panic("unimplemented")
 	}
 
-	bs, err := ioutil.ReadAll(r)
-	if err != nil {
-		panic("unimplemented")
-	}
-
-	return bs
+	return record.Data
 }
 
 // if it couldn't find anything related to path, it return Value of 0 rev.
@@ -97,7 +96,7 @@ func (b *backend) Put(rev int, path Path, data []byte) {
 		panic("unimplemented")
 	}
 
-	err = NewRecordEncoder(w).Encode(bytes.Buffer(data))
+	err = record.NewRecordEncoder(w).Encode(&record.Record{Data: data})
 	if err != nil {
 		panic("unimplemented")
 	}

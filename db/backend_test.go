@@ -27,7 +27,6 @@ func TestPut(t *testing.T) {
 			t.Errorf("#%d: data = %s, want %s", i, v.data, tt.data)
 		}
 	}
-	b.Close()
 }
 
 func TestPutOnExistingPath(t *testing.T) {
@@ -62,7 +61,6 @@ func TestPutOnExistingPath(t *testing.T) {
 			t.Errorf("#%d 2: data = %s, want %s", i, v.data, tt.data2)
 		}
 	}
-	b.Close()
 }
 
 func TestGetMVCC(t *testing.T) {
@@ -98,7 +96,6 @@ func TestGetMVCC(t *testing.T) {
 			t.Errorf("#%d: data = %s, want %s", i, v.data, tt.data)
 		}
 	}
-	b.Close()
 }
 
 func TestLs(t *testing.T) {
@@ -131,7 +128,6 @@ func TestLs(t *testing.T) {
 			}
 		}
 	}
-	back.Close()
 }
 
 func BenchmarkPut(b *testing.B) {
@@ -147,7 +143,6 @@ func BenchmarkPut(b *testing.B) {
 	for i := 1; i < b.N; i++ {
 		back.Put(i, path[i], d)
 	}
-	back.Close()
 }
 
 func BenchmarkGetWithCache(b *testing.B) {
@@ -168,7 +163,6 @@ func BenchmarkGetWithCache(b *testing.B) {
 			back.Get(i, path[i])
 		}
 	}
-	back.Close()
 }
 
 func BenchmarkGetWithOutCache(b *testing.B) {
@@ -190,5 +184,4 @@ func BenchmarkGetWithOutCache(b *testing.B) {
 			back.Get(i, path[i])
 		}
 	}
-	back.Close()
 }

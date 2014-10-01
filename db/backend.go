@@ -1,59 +1,58 @@
 package db
 
 import (
-	"bytes"
 	"io/ioutil"
 	"os"
 	"strings"
 
-	"github.com/go-distributed/xtree/db/record"
+	"github.com/go-distributed/xtree/db/recordio"
 	"github.com/go-distributed/xtree/third-party/github.com/google/btree"
 )
 
 type backend struct {
-	bt     *btree.BTree
-	cache  *cache
-	rev    int
-	reader *record.Reader
-	writer *record.Writer
+	bt    *btree.BTree
+	cache *cache
+	rev   int
+	fc    recordio.Fetcher
+	ap    recordio.Appender
 }
 
 func newBackend() *backend {
 	bt := btree.New(10)
 
-	file, err := os.OpenFile("test-records",
-		os.O_RDWR|os.O_APPEND|os.O_CREATE|os.O_TRUNC,
-		os.FileMode(0644))
+	// temporary file IO to test in-disk values
+	writeFile, err := ioutil.TempFile("", "backend")
 	if err != nil {
-		panic("can't open file")
+		panic("can't create temp file")
+	}
+	readFile, err := os.Open(writeFile.Name())
+	if err != nil {
+		panic("can't open temp file")
 	}
 
 	return &backend{
-		bt:     bt,
-		cache:  newCache(),
-		reader: record.NewReader(file, new(record.LittleEndianDecoder)),
-		writer: record.NewWriter(file, new(record.LittleEndianEncoder)),
+		bt:    bt,
+		cache: newCache(),
+		fc:    recordio.NewFetcher(readFile),
+		ap:    recordio.NewAppender(writeFile),
 	}
-}
-
-func (b *backend) Close() {
-	os.Remove("test-records")
 }
 
 func (b *backend) getData(offset int64) []byte {
-	reader, err := b.reader.ReadFromIndex(offset)
+	rec, err := b.fc.Fetch(offset)
 	if err != nil {
 		panic("unimplemented")
 	}
-	data, err := ioutil.ReadAll(reader)
-	if err != nil {
-		panic("unimplemented")
-	}
-	return data
+	return rec.Data
 }
 
 // if it couldn't find anything related to path, it return Value of 0 rev.
 func (b *backend) Get(rev int, path Path) Value {
+	if b.cache != nil {
+		if v, ok := b.cache.get(revpath{rev: rev, path: path.p}); ok {
+			return v
+		}
+	}
 	item := b.bt.Get(&path)
 	if item == nil {
 		return Value{}
@@ -88,14 +87,12 @@ func (b *backend) Put(rev int, path Path, data []byte) {
 	}
 
 	b.rev++
-	offset, err := b.writer.Append(bytes.NewBuffer(data))
+	offset, err := b.ap.Append(recordio.Record{data})
 	if err != nil {
 		panic("unimplemented")
 	}
 
 	nv.offset = offset
-
-	b.writer.Flush()
 }
 
 // one-level listing

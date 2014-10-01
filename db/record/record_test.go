@@ -42,8 +42,8 @@ func TestSimpleRead(t *testing.T) {
 	buf.Write(realLenSlice)
 	buf.Write(realValue)
 
-	r := NewReader(bytes.NewReader(buf.Bytes()))
-	valReader, err = r.ReadAt(randOffset)
+	r := NewReader(bytes.NewReader(buf.Bytes()), new(LittleEndianDecoder))
+	valReader, err = r.ReadFromIndex(randOffset)
 	if err != nil {
 		t.Fatalf("error on new reader: %s", err.Error())
 	}
@@ -57,4 +57,34 @@ func TestSimpleRead(t *testing.T) {
 		t.Fatalf("value not equal")
 	}
 
+}
+
+func testEncodeDecode(t *testing.T, buf *bytes.Buffer, dat []byte) {
+	encoder := new(LittleEndianEncoder)
+	recordToWrite := &Record{
+		dat,
+	}
+	if err := encoder.Encode(buf, recordToWrite); err != nil {
+		t.Fatalf("cannot encode %s", err)
+	}
+	decoder := new(LittleEndianDecoder)
+	recordToRead := new(Record)
+	if err := decoder.Decode(buf, recordToRead); err != nil {
+		t.Fatalf("cannot decode %s", err)
+	}
+	if !bytes.Equal(recordToRead.data, recordToWrite.data) {
+		t.Fatalf("data not equal after read")
+	}
+}
+
+func TestEncodeDecode(t *testing.T) {
+	buf := new(bytes.Buffer)
+	testEncodeDecode(t, buf, []byte("somedata"))
+}
+
+func TestEncodeDecodeMultiple(t *testing.T) {
+	buf := new(bytes.Buffer)
+	testEncodeDecode(t, buf, []byte("somedata"))
+	testEncodeDecode(t, buf, []byte("somedata2"))
+	testEncodeDecode(t, buf, []byte("somedata3"))
 }

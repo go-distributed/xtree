@@ -14,7 +14,7 @@ func NewReader(rs io.ReadSeeker, dec Decoder) *Reader {
 	return &Reader{rs, dec}
 }
 
-func (rd *Reader) ReadAt(index int64) (io.Reader, error) {
+func (rd *Reader) ReadFromIndex(index int64) (io.Reader, error) {
 	_, err := rd.rs.Seek(index, 0)
 	if err != nil {
 		return nil, err

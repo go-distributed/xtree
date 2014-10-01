@@ -1,6 +1,8 @@
 package db
 
 import (
+	"bytes"
+	"io/ioutil"
 	"os"
 	"strings"
 
@@ -29,8 +31,8 @@ func newBackend() *backend {
 	return &backend{
 		bt:     bt,
 		cache:  newCache(),
-		reader: record.NewReader(file),
-		writer: record.NewWriter(file),
+		reader: record.NewReader(file, new(record.LittleEndianDecoder)),
+		writer: record.NewWriter(file, new(record.LittleEndianEncoder)),
 	}
 }
 
@@ -39,18 +41,15 @@ func (b *backend) Close() {
 }
 
 func (b *backend) getData(offset int64) []byte {
-	reader, err := b.reader.ReadAt(offset)
+	reader, err := b.reader.ReadFromIndex(offset)
 	if err != nil {
 		panic("unimplemented")
 	}
-	decoder := record.NewRecordDecoder(reader)
-	var record record.Record
-	err = decoder.Decode(&record)
+	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		panic("unimplemented")
 	}
-
-	return record.Data
+	return data
 }
 
 // if it couldn't find anything related to path, it return Value of 0 rev.
@@ -89,23 +88,12 @@ func (b *backend) Put(rev int, path Path, data []byte) {
 	}
 
 	b.rev++
-
-	// offset, data
-	offset, w, err := b.writer.Append()
-	if err != nil {
-		panic("unimplemented")
-	}
-
-	err = record.NewRecordEncoder(w).Encode(&record.Record{Data: data})
+	offset, err := b.writer.Append(bytes.NewBuffer(data))
 	if err != nil {
 		panic("unimplemented")
 	}
 
 	nv.offset = offset
-	_, err = w.Write(data)
-	if err != nil {
-		panic("unimplemented")
-	}
 
 	b.writer.Flush()
 }

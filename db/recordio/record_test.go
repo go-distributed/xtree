@@ -18,11 +18,11 @@ func TestEncodeDecode(t *testing.T) {
 		buf := new(bytes.Buffer)
 		recordToWrite := &Record{tt.data}
 
-		if err := recordToWrite.encodeTo(buf); err != nil {
+		if err := recordToWrite.EncodeTo(buf); err != nil {
 			t.Fatalf("#%d: cannot encode, err: %s", i, err)
 		}
 		recordToRead := new(Record)
-		if err := recordToRead.decodeFrom(buf); err != nil {
+		if err := recordToRead.DecodeFrom(buf); err != nil {
 			t.Fatalf("#%d: cannot decode, err: %s", i, err)
 		}
 		if !reflect.DeepEqual(recordToRead, recordToWrite) {

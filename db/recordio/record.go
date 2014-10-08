@@ -9,11 +9,29 @@ const (
 	sizeOfLength = 4
 )
 
+// Encoder is an interface implemented by an object that can
+// encode itself into a binary representation with an io.Writer
+type Encoder interface {
+	EncodeTo(wr io.Writer) error
+}
+
+// Decoder is an interface implemented by an object that can
+// decodes itself from a binary representation provided by
+// an io.Reader
+type Decoder interface {
+	DecodeFrom(rd io.Reader) error
+}
+
+// Record is a struct that holds some binary data and can be
+// encoded into/decoded from the following binary form
+// [lenth of record]                  : 4 bytes
+// [content of record]
 type Record struct {
 	Data []byte
 }
 
-func (r *Record) encodeTo(wr io.Writer) error {
+// EncodeTo encodes a binary data in record object to an io.Writer
+func (r *Record) EncodeTo(wr io.Writer) error {
 	// Write length
 	lBuf := make([]byte, sizeOfLength)
 	binary.LittleEndian.PutUint32(lBuf, uint32(len(r.Data)))
@@ -28,7 +46,8 @@ func (r *Record) encodeTo(wr io.Writer) error {
 	return nil
 }
 
-func (r *Record) decodeFrom(rd io.Reader) error {
+// DecodeFrom decodes binary data out of io.Reader
+func (r *Record) DecodeFrom(rd io.Reader) error {
 	var length uint32
 	// Read length
 	err := binary.Read(rd, binary.LittleEndian, &length)

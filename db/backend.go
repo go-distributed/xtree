@@ -39,7 +39,8 @@ func newBackend() *backend {
 }
 
 func (b *backend) getData(offset int64) []byte {
-	rec, err := b.fc.Fetch(offset)
+	rec := &recordio.Record{Data: nil}
+	err := b.fc.Fetch(offset, rec)
 	if err != nil {
 		panic("unimplemented")
 	}
@@ -87,7 +88,7 @@ func (b *backend) Put(rev int, path Path, data []byte) {
 	}
 
 	b.rev++
-	offset, err := b.ap.Append(recordio.Record{data})
+	offset, err := b.ap.Append(&recordio.Record{data})
 	if err != nil {
 		panic("unimplemented")
 	}

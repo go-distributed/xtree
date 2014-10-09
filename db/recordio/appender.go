@@ -3,7 +3,7 @@ package recordio
 import "io"
 
 type Appender interface {
-	Append(Record) (int64, error)
+	Append(Encoder) (int64, error)
 }
 
 type appender struct {
@@ -15,13 +15,13 @@ func NewAppender(w io.WriteSeeker) Appender {
 }
 
 // Not thread-safe
-func (ap *appender) Append(r Record) (offset int64, err error) {
+func (ap *appender) Append(r Encoder) (offset int64, err error) {
 	offset, err = ap.w.Seek(0, 2)
 	if err != nil {
 		return -1, err
 	}
 
-	err = (&r).encodeTo(ap.w)
+	err = r.EncodeTo(ap.w)
 	if err != nil {
 		return -1, err
 	}

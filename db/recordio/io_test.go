@@ -26,10 +26,10 @@ func TestFetch(t *testing.T) {
 
 	tests := []struct {
 		offset int64
-		record Record
+		record *Record
 	}{
-		{-1, Record{[]byte("someData")}},
-		{-1, Record{[]byte("someOtherData")}},
+		{-1, &Record{[]byte("someData")}},
+		{-1, &Record{[]byte("someOtherData")}},
 	}
 
 	for i, tt := range tests {
@@ -41,7 +41,8 @@ func TestFetch(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		recRead, err := fc.Fetch(tt.offset)
+		recRead := &Record{Data: nil}
+		err := fc.Fetch(tt.offset, recRead)
 		if err != nil {
 			t.Errorf("#%d: Fetch failed: %s", i, err.Error())
 		}

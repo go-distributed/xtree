@@ -1,11 +1,10 @@
 package db
 
 import (
-	"io/ioutil"
-	"os"
 	"strings"
 
-	"github.com/go-distributed/xtree/db/recordio"
+	"github.com/go-distributed/xtree/db/log"
+	"github.com/go-distributed/xtree/db/message"
 	"github.com/go-distributed/xtree/third-party/github.com/google/btree"
 )
 
@@ -13,33 +12,24 @@ type backend struct {
 	bt    *btree.BTree
 	cache *cache
 	rev   int
-	fc    recordio.Fetcher
-	ap    recordio.Appender
+	log   *log.Log
 }
 
 func newBackend() *backend {
 	bt := btree.New(10)
-
-	// temporary file IO to test in-disk values
-	writeFile, err := ioutil.TempFile("", "backend")
+	log, err := log.Create()
 	if err != nil {
-		panic("can't create temp file")
+		panic("Not implemented")
 	}
-	readFile, err := os.Open(writeFile.Name())
-	if err != nil {
-		panic("can't open temp file")
-	}
-
 	return &backend{
 		bt:    bt,
 		cache: newCache(),
-		fc:    recordio.NewFetcher(readFile),
-		ap:    recordio.NewAppender(writeFile),
+		log:   log,
 	}
 }
 
 func (b *backend) getData(offset int64) []byte {
-	rec, err := b.fc.Fetch(offset)
+	rec, err := b.log.GetRecord(offset)
 	if err != nil {
 		panic("unimplemented")
 	}
@@ -87,7 +77,11 @@ func (b *backend) Put(rev int, path Path, data []byte) {
 	}
 
 	b.rev++
-	offset, err := b.ap.Append(recordio.Record{data})
+	offset, err := b.log.Append(&message.Record{
+		Rev:  b.rev,
+		Key:  path.p,
+		Data: data,
+	})
 	if err != nil {
 		panic("unimplemented")
 	}

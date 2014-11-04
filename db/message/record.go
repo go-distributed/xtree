@@ -3,7 +3,6 @@ package message
 import "encoding/json"
 
 type Record struct {
-	Rev  int
 	Key  string
 	Data []byte
 }

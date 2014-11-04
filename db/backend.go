@@ -78,7 +78,6 @@ func (b *backend) Put(rev int, path Path, data []byte) {
 
 	b.rev++
 	offset, err := b.log.Append(&message.Record{
-		Rev:  b.rev,
 		Key:  path.p,
 		Data: data,
 	})

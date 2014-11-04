@@ -21,12 +21,10 @@ func TestAppendAndGetRecord(t *testing.T) {
 		rec    *message.Record
 	}{
 		{-1, &message.Record{
-			Rev:  1,
 			Key:  "/test",
 			Data: []byte("some data"),
 		}},
 		{-1, &message.Record{
-			Rev:  2,
 			Key:  "/test2",
 			Data: []byte("some other data"),
 		}},

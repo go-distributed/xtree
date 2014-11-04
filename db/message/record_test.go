@@ -10,7 +10,6 @@ func TestLogRecord(t *testing.T) {
 		rec *Record
 	}{
 		{&Record{
-			Rev:  1,
 			Key:  "/test",
 			Data: []byte("some data"),
 		}},

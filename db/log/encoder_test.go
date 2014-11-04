@@ -13,7 +13,6 @@ func TestEncoderDecoder(t *testing.T) {
 		rec *message.Record
 	}{
 		{&message.Record{
-			Rev:  1,
 			Key:  "/test",
 			Data: []byte("some data"),
 		}},

@@ -16,7 +16,6 @@ func Create() (*Log, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &Log{f}, nil
 }
 
@@ -24,28 +23,24 @@ func (l *Log) Destroy() error {
 	return os.Remove(l.f.Name())
 }
 
-func (l *Log) GetRecord(offset int64) (*message.Record, error) {
-	_, err := l.f.Seek(offset, 0)
-	if err != nil {
-		return nil, err
+func (l *Log) GetRecord(offset int64) (r *message.Record, err error) {
+	if _, err = l.f.Seek(offset, 0); err != nil {
+		return
 	}
-
 	decoder := newDecoder(l.f)
-	r := &message.Record{}
-	decoder.decode(r)
-
-	return r, nil
+	r = &message.Record{}
+	err = decoder.decode(r)
+	return
 }
 
 func (l *Log) Append(r *message.Record) (offset int64, err error) {
-	offset, err = l.f.Seek(0, 2)
-	if err != nil {
-		return -1, err
+	if offset, err = l.f.Seek(0, 2); err != nil {
+		return
 	}
-
 	encoder := newEncoder(l.f)
-
-	err = encoder.encode(r)
-	encoder.flush()
+	if err = encoder.encode(r); err != nil {
+		return
+	}
+	err = encoder.flush()
 	return offset, err
 }

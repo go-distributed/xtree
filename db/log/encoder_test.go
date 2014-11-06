@@ -30,7 +30,7 @@ func TestEncoderDecoder(t *testing.T) {
 			t.Fatalf("#%d: cannot flush encode, err: %v", i, err)
 		}
 
-		rec := &message.Record{}
+		rec := new(message.Record)
 		dBuf := bytes.NewBuffer(eBuf.Bytes())
 		decoder := newDecoder(dBuf)
 

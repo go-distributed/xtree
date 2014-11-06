@@ -1,6 +1,8 @@
 package log
 
 import (
+	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 
@@ -9,16 +11,22 @@ import (
 
 func TestAppendAndGetRecord(t *testing.T) {
 	var err error
-	var log *Log
-	if log, err = Create(); err != nil {
+	var l *DBLog
+	var dataDir string
+
+	if dataDir, err = ioutil.TempDir("", "logtest"); err != nil {
+		t.Errorf("ioutil.TempDir failed: %v", err)
+	}
+
+	defer os.RemoveAll(dataDir)
+
+	if l, err = Create(dataDir); err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
 
-	defer log.Destroy()
-
 	tests := []struct {
 		offset int64
-		rec    *message.Record
+		record *message.Record
 	}{
 		{-1, &message.Record{
 			Key:  "/test",
@@ -31,21 +39,21 @@ func TestAppendAndGetRecord(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		tests[i].offset, err = log.Append(tt.rec)
+		tests[i].offset, err = l.Append(tt.record)
 		if err != nil {
 			t.Errorf("#%d: Append failed: %v", i, err)
 		}
 	}
 
 	for i, tt := range tests {
-		var rec *message.Record
-		if rec, err = log.GetRecord(tt.offset); err != nil {
+		var r *message.Record
+		if r, err = l.GetRecord(tt.offset); err != nil {
 			t.Errorf("#%d: GetRecord failed: %v", i, err)
 		}
 
-		if !reflect.DeepEqual(tt.rec, rec) {
+		if !reflect.DeepEqual(tt.record, r) {
 			t.Errorf("#%d: records not the same, want: %v, get %v",
-				i, tt.rec, rec)
+				i, tt.record, r)
 		}
 
 	}

@@ -20,6 +20,9 @@ func Create() (*Log, error) {
 }
 
 func (l *Log) Destroy() error {
+	if err := l.f.Close(); err != nil {
+		return err
+	}
 	return os.Remove(l.f.Name())
 }
 

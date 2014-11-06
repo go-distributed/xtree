@@ -89,8 +89,8 @@ func (b *backend) Put(rev int, path Path, data []byte) {
 }
 
 // one-level listing
-func (b *backend) Ls(pathname string) []Path {
-	result := make([]Path, 0)
+func (b *backend) Ls(pathname string) (paths []Path) {
+	paths = make([]Path, 0)
 	pivot := newPathForLs(pathname)
 
 	b.bt.AscendGreaterOrEqual(pivot, func(treeItem btree.Item) bool {
@@ -99,8 +99,8 @@ func (b *backend) Ls(pathname string) []Path {
 			p.level != pivot.level {
 			return false
 		}
-		result = append(result, *p)
+		paths = append(paths, *p)
 		return true
 	})
-	return result
+	return
 }

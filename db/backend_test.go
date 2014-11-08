@@ -17,6 +17,7 @@ func TestPut(t *testing.T) {
 	}
 
 	b := newBackend()
+	defer b.testableCleanupResource()
 	for i, tt := range tests {
 		b.Put(tt.rev, tt.path, tt.data)
 		v := b.Get(tt.rev, tt.path)
@@ -27,6 +28,7 @@ func TestPut(t *testing.T) {
 			t.Errorf("#%d: data = %s, want %s", i, v.data, tt.data)
 		}
 	}
+
 }
 
 func TestPutOnExistingPath(t *testing.T) {
@@ -40,6 +42,7 @@ func TestPutOnExistingPath(t *testing.T) {
 	}
 
 	b := newBackend()
+	defer b.testableCleanupResource()
 	for i, tt := range tests {
 		b.Put(2*i+1, tt.path, tt.data1)
 		v := b.Get(2*i+1, tt.path)
@@ -65,6 +68,8 @@ func TestPutOnExistingPath(t *testing.T) {
 
 func TestGetMVCC(t *testing.T) {
 	b := newBackend()
+	defer b.testableCleanupResource()
+
 	b.Put(1, *newPath("/a"), []byte("1"))
 	b.Put(2, *newPath("/b"), []byte("2"))
 	b.Put(3, *newPath("/a"), []byte("3"))
@@ -99,12 +104,15 @@ func TestGetMVCC(t *testing.T) {
 }
 
 func TestLs(t *testing.T) {
-	back := newBackend()
 	d := []byte("somedata")
-	back.Put(1, *newPath("/a"), d)
-	back.Put(2, *newPath("/a/b"), d)
-	back.Put(3, *newPath("/a/c"), d)
-	back.Put(4, *newPath("/b"), d)
+
+	b := newBackend()
+	defer b.testableCleanupResource()
+
+	b.Put(1, *newPath("/a"), d)
+	b.Put(2, *newPath("/a/b"), d)
+	b.Put(3, *newPath("/a/c"), d)
+	b.Put(4, *newPath("/b"), d)
 
 	tests := []struct {
 		p   string
@@ -118,7 +126,7 @@ func TestLs(t *testing.T) {
 		{"/c", []string{}},
 	}
 	for i, tt := range tests {
-		ps := back.Ls(tt.p)
+		ps := b.Ls(tt.p)
 		if len(ps) != len(tt.wps) {
 			t.Fatalf("#%d: len(ps) = %d, want %d", i, len(ps), len(tt.wps))
 		}
@@ -130,9 +138,44 @@ func TestLs(t *testing.T) {
 	}
 }
 
+func TestRestore(t *testing.T) {
+	tests := []struct {
+		rev  int
+		path Path
+		data []byte
+	}{
+		{1, *newPath("/foo/bar"), []byte("somedata")},
+		{2, *newPath("/bar/foo"), []byte("datasome")},
+	}
+
+	b := newBackend()
+	for _, tt := range tests {
+		// append records to the log
+		b.Put(tt.rev, tt.path, tt.data)
+	}
+	b.dblog.Close()
+
+	// simulate restoring log in another backend
+	b2, err := newBackendWithConfig(b.config)
+	defer b2.testableCleanupResource()
+	if err != nil {
+		t.Errorf("newBackendWithConfig failed: %v", err)
+	}
+	for i, tt := range tests {
+		v := b2.Get(tt.rev, tt.path)
+		if v.rev != tt.rev {
+			t.Errorf("#%d: rev = %d, want %d", i, v.rev, tt.rev)
+		}
+		if !reflect.DeepEqual(v.data, tt.data) {
+			t.Errorf("#%d: data = %s, want %s", i, v.data, tt.data)
+		}
+	}
+}
+
 func BenchmarkPut(b *testing.B) {
 	b.StopTimer()
 	back := newBackend()
+	defer back.testableCleanupResource()
 	d := []byte("somedata")
 	path := make([]Path, b.N)
 	for i := range path {
@@ -148,6 +191,8 @@ func BenchmarkPut(b *testing.B) {
 func BenchmarkGetWithCache(b *testing.B) {
 	b.StopTimer()
 	back := newBackend()
+	defer back.testableCleanupResource()
+
 	d := []byte("somedata")
 	path := make([]Path, b.N)
 	for i := range path {
@@ -168,6 +213,7 @@ func BenchmarkGetWithCache(b *testing.B) {
 func BenchmarkGetWithOutCache(b *testing.B) {
 	b.StopTimer()
 	back := newBackend()
+	defer back.testableCleanupResource()
 	back.cache = nil
 	d := []byte("somedata")
 	path := make([]Path, b.N)

@@ -1,45 +1,61 @@
 package db
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 
-	"github.com/go-distributed/xtree/db/recordio"
+	dblog "github.com/go-distributed/xtree/db/log"
+	"github.com/go-distributed/xtree/db/message"
 	"github.com/go-distributed/xtree/third-party/github.com/google/btree"
 )
 
 type backend struct {
-	bt    *btree.BTree
-	cache *cache
-	rev   int
-	fc    recordio.Fetcher
-	ap    recordio.Appender
+	bt     *btree.BTree
+	cache  *cache
+	rev    int
+	dblog  *dblog.DBLog
+	config *DBConfig
 }
 
 func newBackend() *backend {
+	dataDir, err := ioutil.TempDir("", "backend")
+	if err != nil {
+		panic("not implemented")
+	}
+
+	config := &DBConfig{
+		DataDir: dataDir,
+	}
+	b, err := newBackendWithConfig(config)
+	if err != nil {
+		panic("not implemented")
+	}
+	return b
+}
+
+func newBackendWithConfig(config *DBConfig) (b *backend, err error) {
 	bt := btree.New(10)
-
-	// temporary file IO to test in-disk values
-	writeFile, err := ioutil.TempFile("", "backend")
-	if err != nil {
-		panic("can't create temp file")
+	b = &backend{
+		bt:     bt,
+		cache:  newCache(),
+		config: config,
 	}
-	readFile, err := os.Open(writeFile.Name())
-	if err != nil {
-		panic("can't open temp file")
+	haveLog := dblog.Exist(config.DataDir)
+	switch haveLog {
+	case false:
+		fmt.Println("didn't have log file. Init...")
+		err = b.init(config)
+	case true:
+		fmt.Println("had log file. Restore...")
+		err = b.restore(config)
 	}
-
-	return &backend{
-		bt:    bt,
-		cache: newCache(),
-		fc:    recordio.NewFetcher(readFile),
-		ap:    recordio.NewAppender(writeFile),
-	}
+	return
 }
 
 func (b *backend) getData(offset int64) []byte {
-	rec, err := b.fc.Fetch(offset)
+	rec, err := b.dblog.GetRecord(offset)
 	if err != nil {
 		panic("unimplemented")
 	}
@@ -87,7 +103,10 @@ func (b *backend) Put(rev int, path Path, data []byte) {
 	}
 
 	b.rev++
-	offset, err := b.ap.Append(recordio.Record{data})
+	offset, err := b.dblog.Append(&message.Record{
+		Key:  path.p,
+		Data: data,
+	})
 	if err != nil {
 		panic("unimplemented")
 	}
@@ -96,8 +115,8 @@ func (b *backend) Put(rev int, path Path, data []byte) {
 }
 
 // one-level listing
-func (b *backend) Ls(pathname string) []Path {
-	result := make([]Path, 0)
+func (b *backend) Ls(pathname string) (paths []Path) {
+	paths = make([]Path, 0)
 	pivot := newPathForLs(pathname)
 
 	b.bt.AscendGreaterOrEqual(pivot, func(treeItem btree.Item) bool {
@@ -106,8 +125,36 @@ func (b *backend) Ls(pathname string) []Path {
 			p.level != pivot.level {
 			return false
 		}
-		result = append(result, *p)
+		paths = append(paths, *p)
 		return true
 	})
-	return result
+
+	return
+}
+
+// init() creates a new log file
+func (b *backend) init(config *DBConfig) (err error) {
+	b.dblog, err = dblog.Create(config.DataDir)
+	return
+}
+
+// restore() restores database from the log file.
+func (b *backend) restore(config *DBConfig) (err error) {
+	rev := 0
+	return dblog.Reuse(config.DataDir,
+		func(l *dblog.DBLog) {
+			b.dblog = l
+		},
+		func(r *message.Record) (err error) {
+			rev++
+			p := newPath(r.Key)
+			b.Put(rev, *p, r.Data)
+			return
+		})
+}
+
+// clean up resource after testing
+func (b *backend) testableCleanupResource() (err error) {
+	b.dblog.Close()
+	return os.RemoveAll(b.config.DataDir)
 }

@@ -23,7 +23,7 @@ type DB interface {
 	// Otherwise, it lists recursively all paths.
 	//
 	// if count is >= 0, it is the number of paths we want in the list.
-	// if count is -1, it means any.
+	// if count is -1, it means all.
 	//
 	// if it failed, an error is returned.
 	Ls(rev int, path string, recursive bool, count int) ([]Path, error)
